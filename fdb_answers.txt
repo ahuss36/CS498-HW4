@@ -1,0 +1,9 @@
+Q1: FoundationDB decouples these systems so they scale independently based on the different workloads. The TMS handles coordinating writes, concurrency control, and conflict resolution whereas the SS is responsible for safely storing the distributed data and giving reads to clients.
+
+Q2: The Resolvers within the TMS are responsible for detecting read write conflicts. It happens during the commit phase, specifically after the Sequencer assigns a commit version but before the data is actually logged to the LogServers.
+
+Q3: The read version is a specific snapshot of the database that the transaction will read from to make sure it sees a consistent state. This ensures FDB's strict serializability guarantee is maintained, since it isolates the transaction's reads from any concurrent writes.
+
+Q4: Snapshot reads bypass the conflict detection process entirely, so they don't add read conflict ranges and won't cause a transaction to abort from a concurrent write. You should choose snapshot reads for background analytics or running long tasks where absolute serializability isn't required and you want to avoid interfering with active write transactions.
+
+Q5: It's cheap because FDB's LogServers constantly stream committed mutations to the StorageServers in the background when runnning. When a failure happens the StorageServers already hold most of the data, which means the system only needs to fetch the small tail of recent logs rather than replaying a large redo log from scratch.
